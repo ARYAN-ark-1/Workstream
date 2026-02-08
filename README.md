@@ -8,6 +8,17 @@ Workstream is a production-grade asynchronous task execution system designed for
 
 ---
 
+## Table of Contents
+- [Architecture](#-architecture)
+- [Key Technical Features](#-key-technical-features)
+- [Monitoring](#-monitoring)
+- [Setup & Deployment](#-setup--deployment)
+- [Usage](#-usage)
+- [API Reference](#-api-reference)
+- [Redis Data Structures](#-redis-data-structures)
+
+---
+
 ## 🏗 Architecture
 
 The system employs a microservices architecture orchestrated via Docker Compose:
@@ -57,7 +68,20 @@ graph LR
 
 ---
 
-## 🛠 Setup & Deployment
+## � Monitoring
+
+**Real-time Dashboard**
+![Dashboard](screenshots/dashboard.png)
+
+**Tasks History**
+![Tasks History](screenshots/tasks-history.png)
+
+**Task Details**
+![Task Details](screenshots/task-details.png)
+
+---
+
+## �🛠 Setup & Deployment
 
 ### Prerequisites
 *   Docker & Docker Compose
@@ -79,16 +103,6 @@ docker compose up -d --build
 **Services:**
 *   **Dashboard**: [http://localhost:3000](http://localhost:3000)
 *   **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
-
----
-
-## 📸 Monitoring
-
-**Real-time Dashboard**
-![Dashboard](screenshots/dashboard.png)
-
-**Task Inspection**
-![Details](screenshots/task-details.png)
 
 ---
 
