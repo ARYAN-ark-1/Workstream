@@ -37,20 +37,14 @@ To demonstrate the system's capabilities with realistic resource-intensive scena
 
 Here are some screenshots of the application in action:
 
-**Task State Flow Overview**
-![Task State Flow Overview](screenshots/task_state_flow_overview.png)
-
-**Queues, Workers, and Circuitbreaker**
-![Queues, Workers, and Circuitbreaker](screenshots/queues__workers_circtuibreaker.png)
+**Dashboard Overview**
+![Dashboard Overview](screenshots/dashboard.png)
 
 **Tasks History**
-![Tasks History](screenshots/tasks_history.png)
+![Tasks History](screenshots/tasks-history.png)
 
-**Task Detail**
-![Task Detail](screenshots/task_detail.png)
-
-**APIs**
-![APIs](screenshots/apis.png)
+**Task Details**
+![Task Details](screenshots/task-details.png)
 
 ## 3. Table of Contents
 
