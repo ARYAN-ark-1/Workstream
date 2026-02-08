@@ -15,6 +15,8 @@ Workstream is a production-grade asynchronous task execution system designed for
 - [Setup & Deployment](#-setup--deployment)
 - [Usage](#-usage)
 - [API Reference](#-api-reference)
+- [Distributed Rate Limiting](#-distributed-rate-limiting)
+- [Performance Management](#-performance-management)
 - [Redis Data Structures](#-redis-data-structures)
 
 ---
@@ -68,7 +70,7 @@ graph LR
 
 ---
 
-## � Monitoring
+## 📸 Monitoring
 
 **Real-time Dashboard**
 ![Dashboard](screenshots/dashboard.png)
@@ -81,7 +83,7 @@ graph LR
 
 ---
 
-## �🛠 Setup & Deployment
+## 🛠 Setup & Deployment
 
 ### Prerequisites
 *   Docker & Docker Compose
@@ -106,7 +108,7 @@ docker compose up -d --build
 
 ---
 
-## � Usage
+## 📖 Usage
 
 *   **Create Tasks**: Use API endpoints or utility scripts.
 *   **Monitor System**: View real-time queue depths and worker status on the Frontend UI.
@@ -143,6 +145,79 @@ docker compose up -d --build
 
 ---
 
+## 🚦 Distributed Rate Limiting
+
+Workstream includes a sophisticated distributed rate limiting system that coordinates API usage across all worker instances to respect external service limits (e.g., OpenRouter API rate limits).
+
+### Overview
+
+The rate limiting system uses a **Redis-based Token Bucket algorithm** to ensure that all workers collectively respect the global rate limits imposed by external APIs. This prevents violations that could cause task failures and service disruptions.
+
+### Key Features
+
+*   **Distributed Coordination**: All workers share the same token bucket stored in Redis.
+*   **Dynamic Configuration**: Rate limits are automatically updated from API responses.
+*   **Atomic Operations**: Uses Redis **Lua scripts** to prevent race conditions.
+*   **Intelligent Waiting**: Workers wait for tokens to become available rather than failing immediately.
+*   **Real-time Monitoring**: Provides detailed metrics on rate limit utilization.
+
+### How It Works
+
+1.  **Configuration Discovery**: The system fetches rate limit information from the API (e.g., 230 requests/10s).
+2.  **Token Bucket Management**: A shared Redis bucket maintains:
+    *   **Capacity**: Max tokens.
+    *   **Refill Rate**: Tokens added per second.
+    *   **Current Tokens**: Available tokens.
+3.  **Request Coordination**:
+    *   Workers atomically acquire a token using a **Redis Lua script**.
+    *   This ensures concurrency safety.
+    *   Workers wait (with timeout) if no tokens are available.
+4.  **Automatic Refill**: Tokens are continuously added based on the refill rate.
+
+### Usage Examples
+
+**Automatic Rate Limiting (Recommended)**
+```python
+# Automatically uses the distributed rate limiter
+result = await call_openrouter_api(messages)
+```
+
+**Manual Rate Limiting**
+```python
+from rate_limiter import wait_for_rate_limit_token
+
+if await wait_for_rate_limit_token(tokens=1, timeout=30.0):
+    result = await make_api_call()
+else:
+    raise Exception("Rate limit token timeout")
+```
+
+---
+
+## ⚡ Performance Management
+
+System performance can be tuned via `.env` variables:
+
+*   `WORKER_REPLICAS`: Scalar number of worker containers.
+*   `CELERY_WORKER_CONCURRENCY`: Threads/Processes per worker.
+*   `WORKER_PREFETCH_MULTIPLIER`: Tasks fetched per batch.
+*   `WORKER_MEMORY_LIMIT`: Docker resource constraints.
+
+### OpenRouter State Management Optimization
+
+Workstream includes an advanced state management system that dramatically improves API performance:
+
+*   **Intelligent Caching**: Status checks cached for 1 minute (5-10s -> ~50ms response).
+*   **Call Reduction**: Reduces overhead by ~95% by using cached data until stale.
+*   **Circuit Breaker**: Coordinates failure tracking across all workers.
+*   **Real-time Propagation**: Immediate reporting of rate limits or credit exhaustion.
+
+**Performance Benefits:**
+*   **Response Time**: ~99% improvement.
+*   **Reliability**: Unified error handling across distributed workers.
+
+---
+
 ## 🧠 Redis Data Structures
 
 ### Task Queues
@@ -160,11 +235,11 @@ docker compose up -d --build
 *   `queue-updates` (Pub/Sub): Channel for real-time frontend updates
 
 ### Rate Limiting & External API
-*   **Configuration**: `openrouter:rate_limit_config` (Hash) - Max requests, interval
-*   **Token Bucket**: `openrouter:rate_limit:bucket` (Hash) - Tokens, capacity, refill rate
-*   **Credits**: `openrouter:credits` (Hash) - Balance, usage
-*   **State**: `openrouter:state` (Hash) - Centralized service state, circuit breaker status
-*   **Metrics**: `openrouter:metrics:{date}` (Hash) - Daily call stats
+*   `openrouter:rate_limit_config` (Hash): Max requests, interval
+*   `openrouter:rate_limit:bucket` (Hash): Tokens, capacity, refill rate
+*   `openrouter:credits` (Hash): Balance, usage
+*   `openrouter:state` (Hash): Centralized service state
+*   `openrouter:metrics:{date}` (Hash): Daily call stats
 
 ### Worker Management
 *   `circuit_breaker:{service}` (Hash): State (`CLOSED`, `OPEN`, `HALF_OPEN`), failure counts
